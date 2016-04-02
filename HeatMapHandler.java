@@ -1,79 +1,75 @@
 package ServerHandler;
 
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-
-import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.xml.bind.DatatypeConverter;
-
-//database imports
-
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
-
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
+/**
+ * Class Name : HeatMapHandler
+ * Purpose : To receive user's heat map request and send the related information to user
+ */
 public class HeatMapHandler {
-
-	public static void getBins(HttpServletRequest request, HttpServletResponse response)
-	{
-		try {
-
-
-			 System.out.println("Database Connection Successful...! *");
-			 response.setStatus(HttpServletResponse.SC_OK);
-			 DataOutputStream out = new DataOutputStream(response.getOutputStream ());
-
-			 Connection connection = null;
-			 PreparedStatement preparedStatement = null;
-			 Class.forName("com.mysql.jdbc.Driver");
-			 connection = DriverManager.getConnection("jdbc:mysql://localhost/velosafe","root","");
-			 preparedStatement = connection.prepareStatement("select * from region_bins");
-			 ResultSet region_bins_result = preparedStatement.executeQuery();
-			 JSONArray regionJsonArray = new JSONArray();
-
-			 region_bins_result.beforeFirst();
-
-			 while(region_bins_result.next())
-			 {
-				 String region_name = region_bins_result.getString(2);
-				 Double region_cord_x = region_bins_result.getDouble(3);
-				 Double region_cord_y = region_bins_result.getDouble(4);
-				 Double region_weight = region_bins_result.getDouble(5);
-				 String region_isSafe = region_bins_result.getString(6);
-				 JSONObject regionJsonObject = new JSONObject();
-				 regionJsonObject.put("region_name", region_name);
-				 regionJsonObject.put("region_cord_x", region_cord_x);
-				 regionJsonObject.put("region_cord_y", region_cord_y);
-				 regionJsonObject.put("region_weight", region_weight);
-				 regionJsonObject.put("regoin_isSafe", region_isSafe);
-
-				 regionJsonArray.add(regionJsonObject);
-   			 }
-			 System.out.println(regionJsonArray.toString());
-			 out.writeBytes(regionJsonArray.toString());
-			 out.flush();
-			 out.close();
-			} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	
+	/**
+     * Method Name : getBins
+     * Purpose : To return the information about heat map back to the user
+     * Parameters : HttpServletRequest request, HttpServletResponse response
+     * Return value : Null
+     */
+	public static void getBins(HttpServletRequest request, HttpServletResponse response){
+		try{
+			DataOutputStream out = new DataOutputStream(response.getOutputStream ());
+			Connection connection = null;
+			response.setStatus(HttpServletResponse.SC_OK);
+			DBConnection dbConnection = new DBConnection();
+			connection = dbConnection.getConnection();
+			ResultSet regionBinsResult = RegionBin.executeBinsQuery(connection);	
+			JSONArray regionJsonArray = new JSONArray();
+			regionJsonArray = constructBinsJSON(regionBinsResult);
+			out.writeBytes(regionJsonArray.toString());
+			out.flush();
+			out.close();
 		}
+		catch(Exception e){
+			e.printStackTrace();
+			System.out.println("Exception in getBins in HeatMapHandler: "+ e);
+		}
+	}
+	
+	/**
+     * Method Name : constructBinsJSON
+     * Purpose : To get the bin results and construct them into JSONArray
+     * Parameters : ResultSet regionBinsResult
+     * Return value : JSONArray
+     */
+	@SuppressWarnings("unchecked")
+	private static JSONArray constructBinsJSON(ResultSet regionBinsResult){
+		JSONArray regionJsonArray = new JSONArray();
+		try{
+			regionBinsResult.beforeFirst();
+			while(regionBinsResult.next()){
+				String region_name = regionBinsResult.getString(2);
+				Double region_cord_x = regionBinsResult.getDouble(3);
+				Double region_cord_y = regionBinsResult.getDouble(4);
+				Double region_weight = regionBinsResult.getDouble(5);
+				String region_isSafe = regionBinsResult.getString(6);
+				JSONObject regionJsonObject = new JSONObject();
+				regionJsonObject.put("region_name", region_name);
+				regionJsonObject.put("region_cord_x", region_cord_x);
+				regionJsonObject.put("region_cord_y", region_cord_y);
+				regionJsonObject.put("region_weight", region_weight);
+				regionJsonObject.put("region_isSafe", region_isSafe);
+				regionJsonArray.add(regionJsonObject);
+			}
+		}
+		catch(Exception e){
+			e.printStackTrace();
+			System.out.println("Exception in constructJSON in HeatMapHandler: "+ e);
+		}
+		return regionJsonArray;
 	}
 }

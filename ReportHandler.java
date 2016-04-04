@@ -29,10 +29,17 @@ public class ReportHandler {
 			String report_details = request.getParameter("report_details");
 			Object obj = parser.parse(report_details);
 			JSONObject jsonObj = (JSONObject) obj;
-			DBConnection dbConnection = new DBConnection();
-			connection = dbConnection.getConnection();
-			int lost_bin_number = insertReportToDB(connection, jsonObj);
-			updateRegionBin(connection, lost_bin_number);
+			int numberOfDB = Constants.numberOfDB;
+			String dbName = null;
+			for(int dbCount =0;dbCount<numberOfDB;dbCount++)
+			{
+				dbName = Constants.dbName[dbCount];
+				DBConnection dbConnection = new DBConnection();
+				connection = dbConnection.getConnectionForWrite(dbName);
+				int lost_bin_number = insertReportToDB(connection, jsonObj);
+				updateRegionBin(connection, lost_bin_number);
+				connection.close();
+			}
 		}
 		catch(Exception e){
 			e.printStackTrace();
@@ -118,19 +125,19 @@ public class ReportHandler {
 	private static String getColor(Double region_weight, Double minWeight, Double maxWeight, Double weightInterval) {
 		String regionColor= null;
 		if(region_weight.intValue()==minWeight.intValue()){
-			regionColor = "HUE_GREEN";
+			regionColor = "GREEN";
 		}
 		else if(region_weight.intValue()==maxWeight.intValue()){
-			regionColor = "HUE_RED";
+			regionColor = "RED";
 		}
 		else if(weightInterval==1.0){
-			regionColor = "HUE_GREEN";  
+			regionColor = "GREEN";  
 		}
 		else if(weightInterval==2.0){
-			regionColor = "HUE_ORANGE";
+			regionColor = "ORANGE";
 		}
 		else if(weightInterval==3.0){
-			regionColor =  "HUE_RED";
+			regionColor =  "RED";
 		}
 		return regionColor;
 	}

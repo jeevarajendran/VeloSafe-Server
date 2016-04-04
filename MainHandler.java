@@ -45,6 +45,7 @@ public class MainHandler extends HttpServlet {
 		try{			
 			String pageName = request.getParameter("page");
 			if(pageName.equals("heat_map")){
+				System.out.println("Heat map");
 				HeatMapHandler.getBins(request, response);
 			}
 			else if(pageName.equals("registration")){

@@ -26,7 +26,7 @@ public class HeatMapHandler {
 			Connection connection = null;
 			response.setStatus(HttpServletResponse.SC_OK);
 			DBConnection dbConnection = new DBConnection();
-			connection = dbConnection.getConnection();
+			connection = dbConnection.getConnectionForRead();
 			ResultSet regionBinsResult = RegionBin.executeBinsQuery(connection);	
 			JSONArray regionJsonArray = new JSONArray();
 			regionJsonArray = constructBinsJSON(regionBinsResult);

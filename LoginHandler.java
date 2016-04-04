@@ -37,7 +37,7 @@ public class LoginHandler {
 			String user_email = (String) jsonObj.get("email");
 			String user_password = (String) jsonObj.get("password");
 			DBConnection dbConnection = new DBConnection();
-			connection = dbConnection.getConnection();
+			connection = dbConnection.getConnectionForRead();
 			ResultSet passwordCheck = getUserPasswordfromDB(connection, user_email);
 			passwordCheck.beforeFirst();
 			DataOutputStream out = new DataOutputStream(response.getOutputStream());

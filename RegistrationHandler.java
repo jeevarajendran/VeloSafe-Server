@@ -28,16 +28,17 @@ public class RegistrationHandler {
 	public static void registerUser(HttpServletRequest request, HttpServletResponse response){
 		try{
 			Connection connection = null;
+			DBConnection dbConnection = new DBConnection();
 			JSONParser parser = new JSONParser();
 			JSONArray regionJsonArray = new JSONArray();
 			String reg_details = request.getParameter("reg_details");
 			Object obj = parser.parse(reg_details);
 			JSONObject jsonObj = (JSONObject) obj;
 			String user_email = (String) jsonObj.get("user_email");
-			DBConnection dbConnection = new DBConnection();
-			connection = dbConnection.getConnection();
+			connection = dbConnection.getConnectionForRead();
 			DataOutputStream out = new DataOutputStream(response.getOutputStream());
 			ResultSet registeredCheck = getUserEmailfromDB(connection,user_email);
+			//connection.close();
 			registeredCheck.beforeFirst();
 			if(registeredCheck.next()){
 				out.writeBytes("Already registered");
@@ -45,9 +46,20 @@ public class RegistrationHandler {
 				out.close();
 			}
 			else{
-				insertUserToDB(connection, jsonObj);
+				connection.close();
+				int numberOfDB = Constants.numberOfDB;
+				String dbName = null;
+				for(int dbCount =0;dbCount<numberOfDB;dbCount++)
+				{
+					dbName = Constants.dbName[dbCount];
+					connection = dbConnection.getConnectionForWrite(dbName);
+					insertUserToDB(connection, jsonObj);
+					connection.close();
+				}
+				connection = dbConnection.getConnectionForRead();
 				ResultSet region_bins_result = RegionBin.executeBinsQuery(connection);
-		   		regionJsonArray = constructBinsJSON(region_bins_result);	
+		   		regionJsonArray = constructBinsJSON(region_bins_result);
+		   		connection.close();
 	   		 	out.writeBytes(regionJsonArray.toString());
 	   		 	out.flush();
 	   		 	out.close();

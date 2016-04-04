@@ -25,21 +25,18 @@ public class ReportHandler {
 	public static void reportLost(HttpServletRequest request, HttpServletResponse response){
 		try{
 			Connection connection = null;
+			int lost_bin_number = -1;
 			JSONParser parser = new JSONParser();
 			String report_details = request.getParameter("report_details");
 			Object obj = parser.parse(report_details);
 			JSONObject jsonObj = (JSONObject) obj;
-			int numberOfDB = Constants.numberOfDB;
-			String dbName = null;
-			for(int dbCount =0;dbCount<numberOfDB;dbCount++)
-			{
-				dbName = Constants.dbName[dbCount];
-				DBConnection dbConnection = new DBConnection();
-				connection = dbConnection.getConnectionForWrite(dbName);
-				int lost_bin_number = insertReportToDB(connection, jsonObj);
+			DBConnection dbConnection = new DBConnection();
+			connection = dbConnection.getConnectionForRead();
+			lost_bin_number = insertReportToDB(connection, jsonObj);
+			if(lost_bin_number != -1){
 				updateRegionBin(connection, lost_bin_number);
-				connection.close();
 			}
+			connection.close();
 		}
 		catch(Exception e){
 			e.printStackTrace();
